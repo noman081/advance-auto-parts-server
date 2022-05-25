@@ -16,7 +16,6 @@ const verifyJWT = (req, res, next) => {
         return res.status(401).send({ message: 'Unauthorized access' });
     }
     const token = authHeader.split(' ')[1];
-    console.log(token);
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
         if (err) {
             return res.status(403).send({ message: 'Forbidden access' });
@@ -42,6 +41,13 @@ async function run() {
             const email = req.params.email;
             const user = req.body;
             const filter = { email: email };
+            const isExists = await userCollection.findOne(filter);
+            console.log(user);
+            console.log(isExists);
+            if (isExists) {
+                user.role = isExists.role;
+            }
+            console.log(user);
             const options = { upsert: true };
             const updateDoc = {
                 $set: user,
@@ -51,6 +57,10 @@ async function run() {
             res.send({ result, token });
         });
 
+        app.get('/users', async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        })
 
         //parts api
         app.get('/parts', async (req, res) => {
@@ -64,6 +74,12 @@ async function run() {
             res.send(result);
         });
 
+        app.post('/parts', async (req, res) => {
+            const part = req.body;
+            const result = await partCollection.insertOne(part);
+            res.send(result);
+        })
+
         //orders api
         app.post('/orders', async (req, res) => {
             const order = req.body;
@@ -72,7 +88,12 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/orders', verifyJWT, async (req, res) => {
+        app.get('/orders', async (req, res) => {
+            const orders = await orderCollection.find().toArray();
+            res.send(orders);
+        })
+
+        app.get('/order', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
             if (email === decodedEmail) {
@@ -90,6 +111,33 @@ async function run() {
         app.post('/reviews', verifyJWT, async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        })
+
+        //admin and user check
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            console.log(user);
+            const isAdmin = user.role === 'admin';
+            console.log('admin ', isAdmin);
+            res.send({ admin: isAdmin });
+        });
+
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isUser = user.role === 'user';
+            console.log('user ', isUser);
+            res.send({ user: isUser });
+        });
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
         })
     }
