@@ -35,6 +35,7 @@ async function run() {
         const partCollection = client.db('Autoparts').collection('parts');
         const orderCollection = client.db('Autoparts').collection('orders');
         const userCollection = client.db('Autoparts').collection('users');
+        const reviewCollection = client.db('Autoparts').collection('reviews');
 
         //users api
         app.put('/user/:email', async (req, res) => {
@@ -68,6 +69,27 @@ async function run() {
             const order = req.body;
             console.log(order);
             const result = await orderCollection.insertOne(order);
+            res.send(result);
+        });
+
+        app.get('/orders', verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email === decodedEmail) {
+                const query = { email: email };
+                const orders = await orderCollection.find(query).toArray();
+                res.send(orders);
+            }
+            else {
+                return res.send({ message: 'Forbidden access' });
+            }
+        });
+
+
+        //reviews api
+        app.post('/reviews', verifyJWT, async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
             res.send(result);
         })
     }
