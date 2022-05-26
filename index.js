@@ -80,6 +80,13 @@ async function run() {
             res.send(result);
         })
 
+        app.delete('/part/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await partCollection.deleteOne(filter);
+            res.send(result);
+        })
+
         //orders api
         app.post('/orders', async (req, res) => {
             const order = req.body;
