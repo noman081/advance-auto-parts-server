@@ -135,7 +135,7 @@ async function run() {
             const result = await reviewCollection.insertOne(review);
             res.send(result);
         })
-        app.get('/reviews`', verifyJWT, async (req, res) => {
+        app.get('/reviews', async (req, res) => {
             const reviews = await reviewCollection.find().limit(6).toArray();
             res.send(reviews);
         })
