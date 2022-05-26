@@ -66,7 +66,13 @@ async function run() {
 
         //parts api
         app.get('/parts', async (req, res) => {
-            const result = await partCollection.find().toArray();
+            const home = req.query.home;
+            if (home) {
+                const result = await partCollection.find().limit(6).toArray();
+            }
+            else {
+                const result = await partCollection.find().toArray();
+            }
             res.send(result);
         });
         app.get('/part/:id', async (req, res) => {
